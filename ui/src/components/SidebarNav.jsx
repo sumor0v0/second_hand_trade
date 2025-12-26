@@ -93,6 +93,15 @@ const SidebarNav = () => {
                 <Nav.Link as={NavLink} to="/" end className="w-100 text-start">
                     首页
                 </Nav.Link>
+                {isAuthenticated && (
+                    <Nav.Link
+                        as={NavLink}
+                        to="/items/new"
+                        className="w-100 text-start"
+                    >
+                        发布商品
+                    </Nav.Link>
+                )}
                 <Nav.Link
                     as={NavLink}
                     to="/conversations"
