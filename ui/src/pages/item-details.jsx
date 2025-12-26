@@ -225,9 +225,6 @@ const ItemDetailsPage = () => {
                         <div className="text-muted small">
                             商品编号：{item.id}
                         </div>
-                        <div className="text-muted small">
-                            分类编号：{item.category_id ?? "未分类"}
-                        </div>
                     </section>
 
                     <div className="d-flex gap-2">
