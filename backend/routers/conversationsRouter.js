@@ -1,10 +1,9 @@
 const express = require("express");
 const { db } = require("../config/db");
 const { authMiddleware } = require("../middlewares/authMiddleware");
-const { createUploader, conditionalUpload } = require("../utils/uploader");
+const { createUploader } = require("../utils/uploader");
 
 const router = express.Router();
-const conversationUploader = createUploader("conversations");
 
 async function ensureConversation(userId, targetUserId) {
   const ordered = [userId, targetUserId].sort((a, b) => a - b);

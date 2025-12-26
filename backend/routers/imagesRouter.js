@@ -1,10 +1,9 @@
 const express = require("express");
 const { db } = require("../config/db");
 const { authMiddleware } = require("../middlewares/authMiddleware");
-const { createUploader, conditionalUpload } = require("../utils/uploader");
+const { createUploader } = require("../utils/uploader");
 
 const router = express.Router();
-const itemUploader = createUploader("items");
 
 router.post("/items/:itemId/images", authMiddleware, async (req, res, next) => {
   try {
