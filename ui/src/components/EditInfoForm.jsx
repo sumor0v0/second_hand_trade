@@ -1,7 +1,8 @@
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { Modal, Button, Form, Alert } from "react-bootstrap";
 import { useAuth } from "../contexts/AuthContext";
 import http from "../lib/http.js";
+import { BACKEND_URL } from "../config/apiUrl.js";
 
 function EditInfoForm({ show, onHide, onSuccess, onError }) {
     const { user, refreshUser } = useAuth();
@@ -10,9 +11,11 @@ function EditInfoForm({ show, onHide, onSuccess, onError }) {
         email: "",
         bio: "",
         password: "",
+        avatar: "",
     });
     const [submitting, setSubmitting] = useState(false);
     const [localError, setLocalError] = useState(null);
+    const [uploading, setUploading] = useState(false);
 
     useEffect(() => {
         if (show && user) {
@@ -21,6 +24,7 @@ function EditInfoForm({ show, onHide, onSuccess, onError }) {
                 email: user.email || "",
                 bio: user.bio || "",
                 password: "",
+                avatar: user.avatar || "",
             });
             setLocalError(null);
         }
@@ -47,6 +51,9 @@ function EditInfoForm({ show, onHide, onSuccess, onError }) {
         if (formData.password) {
             payload.password = formData.password;
         }
+        if (formData.avatar) {
+            payload.avatar = formData.avatar;
+        }
 
         try {
             await http.put(`/users/${user.id}`, payload);
@@ -66,6 +73,51 @@ function EditInfoForm({ show, onHide, onSuccess, onError }) {
         }
     };
 
+    const handleAvatarChange = async (event) => {
+        const file = event.target.files?.[0];
+        if (!file) {
+            return;
+        }
+        if (!user) {
+            return;
+        }
+        setUploading(true);
+        setLocalError(null);
+        onError?.(null);
+        try {
+            const data = new FormData();
+            data.append("image", file);
+            const response = await http.post("/uploads/avatars", data, {
+                headers: { "Content-Type": "multipart/form-data" },
+            });
+            setFormData((prev) => ({ ...prev, avatar: response.data.url }));
+        } catch (error) {
+            const message =
+                error.response?.data?.message ||
+                error.message ||
+                "头像上传失败，请稍后再试";
+            setLocalError(message);
+            onError?.(message);
+        } finally {
+            setUploading(false);
+            event.target.value = "";
+        }
+    };
+
+    const avatarPreview = useMemo(() => {
+        const value = formData.avatar;
+        if (!value) {
+            return null;
+        }
+        if (/^https?:\/\//i.test(value)) {
+            return value;
+        }
+        if (value.startsWith("/")) {
+            return `${BACKEND_URL}${value}`;
+        }
+        return `${BACKEND_URL}/${value}`;
+    }, [formData.avatar]);
+
     return (
         <Modal show={show} onHide={onHide} centered>
             <Modal.Header closeButton>
@@ -78,6 +130,32 @@ function EditInfoForm({ show, onHide, onSuccess, onError }) {
                     onSubmit={handleSubmit}
                     className="d-flex flex-column gap-3"
                 >
+                    <Form.Group controlId="editProfileAvatar">
+                        <Form.Label>头像</Form.Label>
+                        {avatarPreview && (
+                            <div className="mb-2">
+                                <img
+                                    src={avatarPreview}
+                                    alt="头像预览"
+                                    style={{
+                                        width: "96px",
+                                        height: "96px",
+                                        borderRadius: "50%",
+                                        objectFit: "cover",
+                                    }}
+                                />
+                            </div>
+                        )}
+                        <Form.Control
+                            type="file"
+                            accept="image/*"
+                            onChange={handleAvatarChange}
+                            disabled={uploading || submitting}
+                        />
+                        <Form.Text className="text-muted">
+                            支持 JPG / PNG，大小不超过服务器限制。
+                        </Form.Text>
+                    </Form.Group>
                     <Form.Group controlId="editProfileUsername">
                         <Form.Label>用户名</Form.Label>
                         <Form.Control
@@ -130,7 +208,7 @@ function EditInfoForm({ show, onHide, onSuccess, onError }) {
                 <Button
                     variant="secondary"
                     onClick={onHide}
-                    disabled={submitting}
+                    disabled={submitting || uploading}
                 >
                     关闭
                 </Button>
@@ -138,9 +216,9 @@ function EditInfoForm({ show, onHide, onSuccess, onError }) {
                     type="submit"
                     form="editProfileForm"
                     variant="primary"
-                    disabled={submitting}
+                    disabled={submitting || uploading}
                 >
-                    {submitting ? "保存中..." : "保存更改"}
+                    {submitting || uploading ? "保存中..." : "保存更改"}
                 </Button>
             </Modal.Footer>
         </Modal>
