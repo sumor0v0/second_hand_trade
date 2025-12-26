@@ -26,7 +26,7 @@ function App() {
 
     return (
         <Container fluid className="vh-100 d-flex flex-column p-0">
-            <Row className="g-0 flex-shrink-0">
+            <Row className="g-0 flex-shrink-0" style={{ minHeight: 0 }}>
                 <Col className="p-0">
                     <Navbar
                         bg="light"
@@ -82,12 +82,13 @@ function App() {
                     </Navbar>
                 </Col>
             </Row>
-            <Row className="flex-grow-1 overflow-hidden g-0">
+            <Row className="flex-grow-1 g-0" style={{ minHeight: 0 }}>
                 <Col
                     xs={12}
                     md={2}
                     lg={2}
                     className="border-end bg-light overflow-auto p-0"
+                    style={{ minHeight: 0 }}
                 >
                     <SidebarNav />
                 </Col>
@@ -96,6 +97,7 @@ function App() {
                     md={10}
                     lg={10}
                     className="overflow-auto p-3 bg-white"
+                    style={{ minHeight: 0 }}
                 >
                     <Outlet />
                 </Col>

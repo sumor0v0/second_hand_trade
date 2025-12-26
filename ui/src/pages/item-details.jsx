@@ -1,8 +1,10 @@
 import { useEffect, useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
-import { Alert, Badge, Button, Col, Row, Spinner } from "react-bootstrap";
+import { Alert, Badge, Button, Col, Form, Row, Spinner } from "react-bootstrap";
 import axios from "axios";
 import { API_URL, BACKEND_URL } from "../config/apiUrl.js";
+import http from "../lib/http.js";
+import { useAuth } from "../contexts/AuthContext.jsx";
 
 const statusMeta = {
     on_sale: { text: "在售", variant: "success" },
@@ -39,13 +41,44 @@ const formatDateTime = (dateString) => {
     return date.toLocaleString();
 };
 
+const resolveUserAvatar = (path) => {
+    if (!path) {
+        return null;
+    }
+    if (/^https?:\/\//i.test(path)) {
+        return path;
+    }
+    if (path.startsWith("/")) {
+        return `${BACKEND_URL}${path}`;
+    }
+    return `${BACKEND_URL}/${path}`;
+};
+
+const getInitials = (value) => {
+    if (!value) {
+        return "?";
+    }
+    const trimmed = String(value).trim();
+    if (!trimmed) {
+        return "?";
+    }
+    return trimmed.charAt(0).toUpperCase();
+};
+
 const ItemDetailsPage = () => {
     const { id } = useParams();
     const navigate = useNavigate();
+    const { isAuthenticated } = useAuth();
     const [item, setItem] = useState(null);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState(null);
     const [activeImageIdx, setActiveImageIdx] = useState(0);
+    const [comments, setComments] = useState([]);
+    const [commentsLoading, setCommentsLoading] = useState(true);
+    const [commentsError, setCommentsError] = useState(null);
+    const [commentContent, setCommentContent] = useState("");
+    const [commentSubmitting, setCommentSubmitting] = useState(false);
+    const [commentSubmitError, setCommentSubmitError] = useState(null);
 
     useEffect(() => {
         const controller = new AbortController();
@@ -84,6 +117,73 @@ const ItemDetailsPage = () => {
 
         return () => controller.abort();
     }, [id]);
+
+    useEffect(() => {
+        if (!id) {
+            return;
+        }
+
+        const controller = new AbortController();
+
+        const fetchComments = async () => {
+            try {
+                setCommentsLoading(true);
+                setCommentsError(null);
+
+                const { data } = await axios.get(
+                    `${API_URL}/items/${id}/comments`,
+                    { signal: controller.signal }
+                );
+
+                setComments(Array.isArray(data) ? data : []);
+            } catch (err) {
+                if (axios.isCancel(err)) {
+                    return;
+                }
+                const message =
+                    err.response?.data?.message ||
+                    err.message ||
+                    "加载评论失败";
+                setCommentsError(message);
+            } finally {
+                setCommentsLoading(false);
+            }
+        };
+
+        fetchComments();
+
+        return () => controller.abort();
+    }, [id]);
+
+    const handleSubmitComment = async (event) => {
+        event.preventDefault();
+        if (!isAuthenticated || commentSubmitting) {
+            return;
+        }
+
+        const content = commentContent.trim();
+        if (!content) {
+            setCommentSubmitError("请输入评论内容");
+            return;
+        }
+
+        setCommentSubmitting(true);
+        setCommentSubmitError(null);
+
+        try {
+            const { data } = await http.post(`/items/${id}/comments`, {
+                content,
+            });
+            setComments((prev) => [data, ...prev]);
+            setCommentContent("");
+        } catch (err) {
+            const message =
+                err?.response?.data?.message || err?.message || "发表评论失败";
+            setCommentSubmitError(message);
+        } finally {
+            setCommentSubmitting(false);
+        }
+    };
 
     if (loading) {
         return (
@@ -238,6 +338,133 @@ const ItemDetailsPage = () => {
                     </div>
                 </Col>
             </Row>
+            <section className="d-flex flex-column gap-3">
+                <h2 className="h6 mb-0">评论</h2>
+                {isAuthenticated ? (
+                    <Form
+                        onSubmit={handleSubmitComment}
+                        className="d-flex flex-column gap-2"
+                    >
+                        <Form.Group controlId="commentContent">
+                            <Form.Label className="visually-hidden">
+                                评论内容
+                            </Form.Label>
+                            <Form.Control
+                                as="textarea"
+                                rows={3}
+                                value={commentContent}
+                                placeholder="分享一下你的看法..."
+                                onChange={(event) => {
+                                    setCommentContent(event.target.value);
+                                    if (commentSubmitError) {
+                                        setCommentSubmitError(null);
+                                    }
+                                }}
+                                disabled={commentSubmitting}
+                            />
+                        </Form.Group>
+                        {commentSubmitError && (
+                            <Alert variant="danger" className="mb-0">
+                                {commentSubmitError}
+                            </Alert>
+                        )}
+                        <div className="d-flex justify-content-end">
+                            <Button
+                                type="submit"
+                                variant="primary"
+                                disabled={
+                                    commentSubmitting || !commentContent.trim()
+                                }
+                            >
+                                {commentSubmitting ? "发表中..." : "发表评论"}
+                            </Button>
+                        </div>
+                    </Form>
+                ) : (
+                    <Alert variant="info" className="mb-0">
+                        登录后可以发表评论。
+                    </Alert>
+                )}
+
+                {commentsLoading ? (
+                    <div className="d-flex justify-content-center py-4">
+                        <Spinner animation="border" role="status" />
+                    </div>
+                ) : commentsError ? (
+                    <Alert variant="danger" className="mb-0">
+                        {commentsError}
+                    </Alert>
+                ) : comments.length ? (
+                    <div
+                        className="d-flex flex-column gap-3"
+                        style={{ maxHeight: "320px", overflowY: "auto" }}
+                    >
+                        {comments.map((comment) => {
+                            const displayName =
+                                comment?.username?.trim() || "用户";
+                            const avatarUrl = resolveUserAvatar(
+                                comment?.avatar
+                            );
+                            const initial = getInitials(displayName);
+
+                            return (
+                                <div
+                                    key={comment.id}
+                                    className="border rounded p-3 d-flex flex-column gap-2"
+                                >
+                                    <div className="d-flex justify-content-between align-items-center gap-3 text-muted small">
+                                        <div className="d-flex align-items-center gap-2">
+                                            <div
+                                                style={{
+                                                    width: "36px",
+                                                    height: "36px",
+                                                    borderRadius: "50%",
+                                                    backgroundColor: avatarUrl
+                                                        ? "transparent"
+                                                        : "#0d6efd",
+                                                    color: "#fff",
+                                                    display: "flex",
+                                                    alignItems: "center",
+                                                    justifyContent: "center",
+                                                    overflow: "hidden",
+                                                    flexShrink: 0,
+                                                    fontSize: "16px",
+                                                }}
+                                            >
+                                                {avatarUrl ? (
+                                                    <img
+                                                        src={avatarUrl}
+                                                        alt="评论者头像"
+                                                        style={{
+                                                            width: "100%",
+                                                            height: "100%",
+                                                            objectFit: "cover",
+                                                            borderRadius: "50%",
+                                                        }}
+                                                    />
+                                                ) : (
+                                                    initial
+                                                )}
+                                            </div>
+                                            <span className="text-body">
+                                                {displayName}
+                                            </span>
+                                        </div>
+                                        <span>
+                                            {formatDateTime(comment.created_at)}
+                                        </span>
+                                    </div>
+                                    <div>{comment.content}</div>
+                                </div>
+                            );
+                        })}
+                    </div>
+                ) : (
+                    <Alert variant="secondary" className="mb-0">
+                        暂无评论。
+                    </Alert>
+                )}
+            </section>
         </div>
     );
 };
