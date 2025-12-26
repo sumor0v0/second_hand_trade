@@ -1,6 +1,6 @@
 import { Button, Card, Col, Row } from "react-bootstrap";
 import { Link } from "react-router-dom";
-import { BACKEND_URL } from "../config/apiUrl";
+import { BACKEND_URL } from "../config/apiUrl.js";
 
 function ItemCard({ item }) {
     const coverImage =

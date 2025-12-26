@@ -2,7 +2,7 @@ import { useEffect, useState } from "react";
 import { Alert, Col, Row, Spinner } from "react-bootstrap";
 import axios from "axios";
 import ItemCard from "../components/ItemCard.jsx";
-import { API_URL } from "../config/apiUrl.js";
+import http from "../lib/http.js";
 
 const ItemsPage = () => {
     const [items, setItems] = useState([]);
@@ -17,7 +17,7 @@ const ItemsPage = () => {
                 setLoading(true);
                 setError(null);
 
-                const { data } = await axios.get(`${API_URL}/items`, {
+                const { data } = await http.get("/items", {
                     signal: controller.signal,
                 });
                 setItems(Array.isArray(data) ? data : []);
