@@ -57,7 +57,6 @@ function ItemCard({ item }) {
                         as={Link}
                         to={`/items/${item.id}`}
                         variant="outline-primary"
-                        onClick={() => console.log(coverImage)}
                     >
                         查看详情
                     </Button>

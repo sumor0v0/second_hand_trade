@@ -4,7 +4,7 @@ import { createBrowserRouter, RouterProvider } from "react-router-dom";
 import "bootstrap/dist/css/bootstrap.min.css";
 import "./index.css";
 import App from "./App.jsx";
-import HomePage from "./pages/home-page.jsx";
+import ItemDetailsPage from "./pages/item-details.jsx";
 import ItemsPage from "./pages/items.jsx";
 
 const router = createBrowserRouter([
@@ -19,6 +19,10 @@ const router = createBrowserRouter([
             {
                 path: "items",
                 element: <ItemsPage />,
+            },
+            {
+                path: "items/:id",
+                element: <ItemDetailsPage />,
             },
         ],
     },
