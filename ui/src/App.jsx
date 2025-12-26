@@ -2,7 +2,7 @@ import { useState } from "react";
 import { Container, Navbar, Form, Row, Col, Button } from "react-bootstrap";
 import { Outlet } from "react-router-dom";
 import SidebarNav from "./components/SidebarNav.jsx";
-import { useAuth } from "./context/AuthContext.jsx";
+import { useAuth } from "./contexts/AuthContext.jsx";
 import LoginModal from "./components/LoginModal.jsx";
 import RegisterModal from "./components/RegisterModal.jsx";
 

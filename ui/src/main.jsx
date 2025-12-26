@@ -6,8 +6,8 @@ import "./index.css";
 import App from "./App.jsx";
 import ItemDetailsPage from "./pages/item-details.jsx";
 import ItemsPage from "./pages/items.jsx";
-import { AuthProvider } from "./context/AuthContext.jsx";
-
+import { AuthProvider } from "./contexts/AuthContext.jsx";
+import ProfilePage from "./pages/profile.jsx";
 const router = createBrowserRouter([
     {
         path: "/",
@@ -24,6 +24,10 @@ const router = createBrowserRouter([
             {
                 path: "items/:id",
                 element: <ItemDetailsPage />,
+            },
+            {
+                path: "profile",
+                element: <ProfilePage />,
             },
         ],
     },

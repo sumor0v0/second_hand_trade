@@ -1,6 +1,6 @@
 import { Button, Nav } from "react-bootstrap";
 import { NavLink } from "react-router-dom";
-import { useAuth } from "../context/AuthContext.jsx";
+import { useAuth } from "../contexts/AuthContext.jsx";
 
 const SidebarNav = () => {
     const { user, isAuthenticated, logout } = useAuth();

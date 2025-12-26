@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { Alert, Button, Form, Modal } from "react-bootstrap";
-import { useAuth } from "../context/AuthContext.jsx";
+import { useAuth } from "../contexts/AuthContext.jsx";
 
 const RegisterModal = ({ show, onHide, switchToLogin }) => {
     const { register } = useAuth();
