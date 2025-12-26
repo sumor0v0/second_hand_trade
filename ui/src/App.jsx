@@ -1,10 +1,28 @@
+import { useState } from "react";
 import { Container, Navbar, Form, Row, Col, Button } from "react-bootstrap";
-import { Outlet, Link } from "react-router-dom";
+import { Outlet } from "react-router-dom";
 import SidebarNav from "./components/SidebarNav.jsx";
 import { useAuth } from "./context/AuthContext.jsx";
+import LoginModal from "./components/LoginModal.jsx";
+import RegisterModal from "./components/RegisterModal.jsx";
 
 function App() {
     const { user, isAuthenticated, logout } = useAuth();
+    const [showLogin, setShowLogin] = useState(false);
+    const [showRegister, setShowRegister] = useState(false);
+
+    const openLogin = () => {
+        setShowRegister(false);
+        setShowLogin(true);
+    };
+
+    const openRegister = () => {
+        setShowLogin(false);
+        setShowRegister(true);
+    };
+
+    const closeLogin = () => setShowLogin(false);
+    const closeRegister = () => setShowRegister(false);
 
     return (
         <Container fluid className="vh-100 d-flex flex-column p-0">
@@ -44,18 +62,16 @@ function App() {
                                 ) : (
                                     <>
                                         <Button
-                                            as={Link}
-                                            to="/auth/login"
                                             variant="outline-primary"
                                             size="sm"
+                                            onClick={openLogin}
                                         >
                                             登录
                                         </Button>
                                         <Button
-                                            as={Link}
-                                            to="/auth/register"
                                             variant="primary"
                                             size="sm"
+                                            onClick={openRegister}
                                         >
                                             注册
                                         </Button>
@@ -84,6 +100,16 @@ function App() {
                     <Outlet />
                 </Col>
             </Row>
+            <LoginModal
+                show={showLogin && !isAuthenticated}
+                onHide={closeLogin}
+                switchToRegister={openRegister}
+            />
+            <RegisterModal
+                show={showRegister && !isAuthenticated}
+                onHide={closeRegister}
+                switchToLogin={openLogin}
+            />
         </Container>
     );
 }
