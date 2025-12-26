@@ -5,22 +5,27 @@ import "bootstrap/dist/css/bootstrap.min.css";
 import "./index.css";
 import App from "./App.jsx";
 import HomePage from "./pages/home-page.jsx";
+import ItemsPage from "./pages/items.jsx";
 
 const router = createBrowserRouter([
-  {
-    path: "/",
-    element: <App />,
-    children: [
-      {
-        index: true,
-        element: <HomePage />,
-      },
-    ],
-  },
+    {
+        path: "/",
+        element: <App />,
+        children: [
+            {
+                index: true,
+                element: <ItemsPage />,
+            },
+            {
+                path: "items",
+                element: <ItemsPage />,
+            },
+        ],
+    },
 ]);
 
 createRoot(document.getElementById("root")).render(
-  <StrictMode>
-    <RouterProvider router={router} />
-  </StrictMode>
+    <StrictMode>
+        <RouterProvider router={router} />
+    </StrictMode>
 );

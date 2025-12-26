@@ -11,6 +11,11 @@ const commentsRouter = require("./routers/commentsRouter");
 const ordersRouter = require("./routers/ordersRouter");
 const conversationsRouter = require("./routers/conversationsRouter");
 const uploadsRouter = require("./routers/uploadsRouter");
+const morgan = require("morgan");
+const cors = require("cors")({
+  origin: "http://localhost:5173",
+  credentials: true,
+});
 
 const PORT = Number(process.env.PORT) || 3000;
 const app = express();
@@ -21,6 +26,9 @@ app.use("/uploads", express.static(path.join(__dirname, "uploads")));
 app.get("/health", (req, res) => {
   res.json({ status: "ok" });
 });
+
+app.use(morgan("dev"));
+app.use(cors);
 
 app.use("/api/auth", authRouter);
 app.use("/api/users", userRouter);
