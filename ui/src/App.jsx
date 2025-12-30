@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { Container, Navbar, Form, Row, Col, Button } from "react-bootstrap";
+import { Container, Navbar, Row, Col, Button } from "react-bootstrap";
 import { Outlet } from "react-router-dom";
 import SidebarNav from "./components/SidebarNav.jsx";
 import { useAuth } from "./contexts/AuthContext.jsx";
@@ -35,16 +35,6 @@ function App() {
                     >
                         <Navbar.Brand>二手交易平台</Navbar.Brand>
                         <div className="d-flex align-items-center ms-auto gap-3 flex-wrap">
-                            <Form
-                                className="flex-grow-1"
-                                style={{ minWidth: "200px", maxWidth: "320px" }}
-                            >
-                                <Form.Control
-                                    type="search"
-                                    placeholder="搜索商品或用户"
-                                    aria-label="搜索"
-                                />
-                            </Form>
                             <div className="d-flex align-items-center gap-2">
                                 {isAuthenticated ? (
                                     <>
