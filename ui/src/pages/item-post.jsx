@@ -8,14 +8,7 @@ const initialForm = {
     title: "",
     description: "",
     price: "",
-    status: "on_sale",
 };
-
-const statusOptions = [
-    { value: "on_sale", label: "在售" },
-    { value: "sold", label: "已售出" },
-    { value: "removed", label: "已下架" },
-];
 
 const ItemPostPage = () => {
     const { isAuthenticated } = useAuth();
@@ -105,17 +98,11 @@ const ItemPostPage = () => {
         setSuccessState(null);
 
         try {
-            const safeStatus = statusOptions.some(
-                (option) => option.value === form.status
-            )
-                ? form.status
-                : "on_sale";
-
             const payload = {
                 title: form.title.trim(),
                 description: form.description.trim(),
                 price: Number.parseFloat(form.price),
-                status: safeStatus,
+                status: "on_sale",
             };
 
             const { data: created } = await http.post("/items", payload);
@@ -273,44 +260,21 @@ const ItemPostPage = () => {
                                 />
                             </Form.Group>
 
-                            <Row className="g-3">
-                                <Col md={6}>
-                                    <Form.Group controlId="price">
-                                        <Form.Label>价格 (¥)</Form.Label>
-                                        <Form.Control
-                                            type="number"
-                                            name="price"
-                                            value={form.price}
-                                            step="0.01"
-                                            min="0"
-                                            onChange={handleChange}
-                                            isInvalid={Boolean(errors.price)}
-                                        />
-                                        <Form.Control.Feedback type="invalid">
-                                            {errors.price}
-                                        </Form.Control.Feedback>
-                                    </Form.Group>
-                                </Col>
-                                <Col md={6}>
-                                    <Form.Group controlId="status">
-                                        <Form.Label>商品状态</Form.Label>
-                                        <Form.Select
-                                            name="status"
-                                            value={form.status}
-                                            onChange={handleChange}
-                                        >
-                                            {statusOptions.map((option) => (
-                                                <option
-                                                    key={option.value}
-                                                    value={option.value}
-                                                >
-                                                    {option.label}
-                                                </option>
-                                            ))}
-                                        </Form.Select>
-                                    </Form.Group>
-                                </Col>
-                            </Row>
+                            <Form.Group controlId="price">
+                                <Form.Label>价格 (¥)</Form.Label>
+                                <Form.Control
+                                    type="number"
+                                    name="price"
+                                    value={form.price}
+                                    step="0.01"
+                                    min="0"
+                                    onChange={handleChange}
+                                    isInvalid={Boolean(errors.price)}
+                                />
+                                <Form.Control.Feedback type="invalid">
+                                    {errors.price}
+                                </Form.Control.Feedback>
+                            </Form.Group>
 
                             <Form.Group controlId="image">
                                 <Form.Label>商品主图（可选）</Form.Label>

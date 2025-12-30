@@ -116,6 +116,15 @@ const SidebarNav = () => {
                 >
                     购买记录
                 </Nav.Link>
+                {isAuthenticated && (
+                    <Nav.Link
+                        as={NavLink}
+                        to="/items/manage"
+                        className="w-100 text-start"
+                    >
+                        商品管理
+                    </Nav.Link>
+                )}
                 <Nav.Link
                     as={NavLink}
                     to="/profile"

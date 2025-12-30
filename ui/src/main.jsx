@@ -9,6 +9,7 @@ import ItemsPage from "./pages/items.jsx";
 import { AuthProvider } from "./contexts/AuthContext.jsx";
 import ProfilePage from "./pages/profile.jsx";
 import ItemPostPage from "./pages/item-post.jsx";
+import ItemsManagePage from "./pages/items-manage.jsx";
 const router = createBrowserRouter([
     {
         path: "/",
@@ -29,6 +30,10 @@ const router = createBrowserRouter([
             {
                 path: "items/:id",
                 element: <ItemDetailsPage />,
+            },
+            {
+                path: "items/manage",
+                element: <ItemsManagePage />,
             },
             {
                 path: "profile",
