@@ -39,6 +39,16 @@ const resolveMediaUrl = (raw) => {
     return `${BACKEND_URL}/${raw}`;
 };
 
+const resolveAvatarUrl = (raw) => resolveMediaUrl(raw);
+
+const getInitial = (value) => {
+    if (!value) {
+        return "?";
+    }
+    const trimmed = String(value).trim();
+    return trimmed ? trimmed.charAt(0).toUpperCase() : "?";
+};
+
 const MESSAGE_PANEL_HEIGHT = 420;
 
 const ConversationsPage = () => {
@@ -70,11 +80,13 @@ const ConversationsPage = () => {
                 map.set(item.id, {
                     id: item.user2_id,
                     name: item.user2_name,
+                    avatar: item.user2_avatar,
                 });
             } else {
                 map.set(item.id, {
                     id: item.user1_id,
                     name: item.user1_name,
+                    avatar: item.user1_avatar,
                 });
             }
         });
@@ -271,6 +283,10 @@ const ConversationsPage = () => {
                                 {conversations.map((item) => {
                                     const peer = peerCache.get(item.id);
                                     const active = item.id === selectedId;
+                                    const avatarUrl = resolveAvatarUrl(
+                                        peer?.avatar
+                                    );
+                                    const initials = getInitial(peer?.name);
                                     return (
                                         <ListGroup.Item
                                             key={item.id}
@@ -279,16 +295,54 @@ const ConversationsPage = () => {
                                             onClick={() =>
                                                 setSelectedId(item.id)
                                             }
-                                            className="d-flex flex-column align-items-start gap-1"
                                         >
-                                            <div className="fw-semibold">
-                                                {peer?.name || "未知用户"}
-                                            </div>
-                                            <div className="text-muted small">
-                                                最近消息：
-                                                {formatTime(
-                                                    item.last_message_at
-                                                ) || "暂无"}
+                                            <div className="d-flex align-items-center gap-3">
+                                                <div
+                                                    style={{
+                                                        width: "40px",
+                                                        height: "40px",
+                                                        borderRadius: "50%",
+                                                        backgroundColor:
+                                                            avatarUrl
+                                                                ? "transparent"
+                                                                : "#0d6efd",
+                                                        color: "#fff",
+                                                        display: "flex",
+                                                        alignItems: "center",
+                                                        justifyContent:
+                                                            "center",
+                                                        overflow: "hidden",
+                                                        flexShrink: 0,
+                                                        fontWeight: "bold",
+                                                    }}
+                                                >
+                                                    {avatarUrl ? (
+                                                        <img
+                                                            src={avatarUrl}
+                                                            alt="会话头像"
+                                                            style={{
+                                                                width: "100%",
+                                                                height: "100%",
+                                                                objectFit:
+                                                                    "cover",
+                                                            }}
+                                                        />
+                                                    ) : (
+                                                        initials
+                                                    )}
+                                                </div>
+                                                <div className="d-flex flex-column align-items-start gap-1">
+                                                    <div className="fw-semibold">
+                                                        {peer?.name ||
+                                                            "未知用户"}
+                                                    </div>
+                                                    <div className="text-muted small">
+                                                        最近消息：
+                                                        {formatTime(
+                                                            item.last_message_at
+                                                        ) || "暂无"}
+                                                    </div>
+                                                </div>
                                             </div>
                                         </ListGroup.Item>
                                     );
