@@ -51,6 +51,7 @@ router.post("/register", async (req, res, next) => {
                 username,
                 email,
                 avatar: null,
+                balance: 0,
             },
         });
     } catch (error) {
@@ -69,7 +70,7 @@ router.post("/login", async (req, res, next) => {
         }
 
         const [rows] = await db.query(
-            "SELECT id, username, email, avatar, password_hash FROM users WHERE username = ? OR email = ? LIMIT 1",
+            "SELECT id, username, email, avatar, balance, password_hash FROM users WHERE username = ? OR email = ? LIMIT 1",
             [identifier, identifier]
         );
 
@@ -93,6 +94,7 @@ router.post("/login", async (req, res, next) => {
                 username: user.username,
                 email: user.email,
                 avatar: user.avatar,
+                balance: user.balance,
             },
         });
     } catch (error) {

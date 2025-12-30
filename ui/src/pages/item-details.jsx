@@ -68,7 +68,7 @@ const getInitials = (value) => {
 const ItemDetailsPage = () => {
     const { id } = useParams();
     const navigate = useNavigate();
-    const { isAuthenticated, user } = useAuth();
+    const { isAuthenticated, user, refreshUser } = useAuth();
     const [item, setItem] = useState(null);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState(null);
@@ -81,6 +81,9 @@ const ItemDetailsPage = () => {
     const [commentSubmitError, setCommentSubmitError] = useState(null);
     const [contacting, setContacting] = useState(false);
     const [contactError, setContactError] = useState(null);
+    const [purchasing, setPurchasing] = useState(false);
+    const [purchaseError, setPurchaseError] = useState(null);
+    const [purchaseSuccess, setPurchaseSuccess] = useState(null);
 
     useEffect(() => {
         const controller = new AbortController();
@@ -221,6 +224,59 @@ const ItemDetailsPage = () => {
         }
     };
 
+    const handlePurchase = async () => {
+        if (!item?.id) {
+            return;
+        }
+
+        if (!isAuthenticated) {
+            setPurchaseError("请先登录后再购买。");
+            setPurchaseSuccess(null);
+            return;
+        }
+
+        if (user?.id === item.seller_id) {
+            setPurchaseError("不能购买自己的商品。");
+            setPurchaseSuccess(null);
+            return;
+        }
+
+        if (item.status !== "on_sale") {
+            setPurchaseError("该商品已无法购买。");
+            setPurchaseSuccess(null);
+            return;
+        }
+
+        setPurchasing(true);
+        setPurchaseError(null);
+        setPurchaseSuccess(null);
+
+        try {
+            const { data: order } = await http.post("/orders", {
+                itemId: item.id,
+            });
+            await http.put(`/orders/${order.id}/pay`);
+            setItem((prev) =>
+                prev
+                    ? {
+                          ...prev,
+                          status: "sold",
+                      }
+                    : prev
+            );
+            setPurchaseSuccess("购买成功，订单已支付。");
+            await refreshUser();
+        } catch (purchaseErr) {
+            const message =
+                purchaseErr?.response?.data?.message ||
+                purchaseErr?.message ||
+                "购买失败";
+            setPurchaseError(message);
+        } finally {
+            setPurchasing(false);
+        }
+    };
+
     if (loading) {
         return (
             <div className="flex-grow-1 d-flex align-items-center justify-content-center">
@@ -280,6 +336,18 @@ const ItemDetailsPage = () => {
         text: item.status || "未知状态",
         variant: "secondary",
     };
+
+    const isSeller = user?.id === item.seller_id;
+    const canPurchase =
+        isAuthenticated && item.status === "on_sale" && !isSeller;
+    const purchaseButtonLabel =
+        item.status !== "on_sale"
+            ? "已售出"
+            : purchasing
+            ? "购买中..."
+            : "立即购买";
+    const purchaseButtonDisabled =
+        purchasing || item.status !== "on_sale" || isSeller;
 
     return (
         <div className="d-flex flex-column gap-4">
@@ -374,7 +442,14 @@ const ItemDetailsPage = () => {
                         </div>
                     </section>
 
-                    <div className="d-flex gap-2">
+                    <div className="d-flex gap-2 flex-wrap">
+                        <Button
+                            variant="success"
+                            onClick={handlePurchase}
+                            disabled={purchaseButtonDisabled}
+                        >
+                            {purchaseButtonLabel}
+                        </Button>
                         <Button
                             variant="primary"
                             onClick={handleContactSeller}
@@ -389,6 +464,16 @@ const ItemDetailsPage = () => {
                             继续浏览
                         </Button>
                     </div>
+                    {purchaseError && (
+                        <Alert variant="danger" className="mb-0">
+                            {purchaseError}
+                        </Alert>
+                    )}
+                    {purchaseSuccess && (
+                        <Alert variant="success" className="mb-0">
+                            {purchaseSuccess}
+                        </Alert>
+                    )}
                     {contactError && (
                         <Alert variant="danger" className="mb-0">
                             {contactError}

@@ -5,6 +5,7 @@ import {
     Card,
     Col,
     Container,
+    Form,
     ListGroup,
     Row,
     Spinner,
@@ -12,6 +13,7 @@ import {
 import { useAuth } from "../contexts/AuthContext";
 import EditInfoForm from "../components/EditInfoForm";
 import { BACKEND_URL } from "../config/apiUrl.js";
+import http from "../lib/http.js";
 
 const formatDateTime = (value) => {
     if (!value) {
@@ -25,10 +27,14 @@ const formatDateTime = (value) => {
 };
 
 function ProfilePage() {
-    const { user, initializing } = useAuth();
+    const { user, initializing, refreshUser } = useAuth();
     const [showEdit, setShowEdit] = useState(false);
     const [feedback, setFeedback] = useState(null);
     const [error, setError] = useState(null);
+    const [rechargeAmount, setRechargeAmount] = useState("");
+    const [rechargeSubmitting, setRechargeSubmitting] = useState(false);
+    const [rechargeError, setRechargeError] = useState(null);
+    const [rechargeSuccess, setRechargeSuccess] = useState(null);
 
     const avatarUrl = useMemo(() => {
         const raw = user?.avatar;
@@ -56,6 +62,52 @@ function ProfilePage() {
         () => formatDateTime(user?.created_at),
         [user?.created_at]
     );
+
+    const balanceDisplay = useMemo(() => {
+        if (user?.balance === undefined || user?.balance === null) {
+            return "0.00";
+        }
+        const numeric = Number.parseFloat(user.balance);
+        if (!Number.isFinite(numeric)) {
+            return String(user.balance);
+        }
+        return numeric.toFixed(2);
+    }, [user?.balance]);
+
+    const handleRecharge = async (event) => {
+        event.preventDefault();
+        if (!user || rechargeSubmitting) {
+            return;
+        }
+
+        const amountNumber = Number.parseFloat(rechargeAmount);
+        if (!Number.isFinite(amountNumber) || amountNumber <= 0) {
+            setRechargeError("请输入有效的充值金额");
+            setRechargeSuccess(null);
+            return;
+        }
+
+        setRechargeSubmitting(true);
+        setRechargeError(null);
+        setRechargeSuccess(null);
+
+        try {
+            await http.post(`/users/${user.id}/recharge`, {
+                amount: amountNumber,
+            });
+            await refreshUser();
+            setRechargeAmount("");
+            setRechargeSuccess("充值成功");
+        } catch (submitError) {
+            const message =
+                submitError?.response?.data?.message ||
+                submitError?.message ||
+                "充值失败";
+            setRechargeError(message);
+        } finally {
+            setRechargeSubmitting(false);
+        }
+    };
 
     if (initializing) {
         return (
@@ -157,28 +209,89 @@ function ProfilePage() {
                         </Card>
                     </Col>
                     <Col md={8}>
-                        <Card className="h-100">
-                            <Card.Header as="h5">详细信息</Card.Header>
-                            <ListGroup variant="flush">
-                                <ListGroup.Item>
-                                    <strong>用户ID:</strong> {user.id}
-                                </ListGroup.Item>
-                                <ListGroup.Item>
-                                    <strong>用户名:</strong> {user.username}
-                                </ListGroup.Item>
-                                <ListGroup.Item>
-                                    <strong>电子邮箱:</strong>{" "}
-                                    {user.email || "未填写"}
-                                </ListGroup.Item>
-                                <ListGroup.Item>
-                                    <strong>个人简介:</strong>{" "}
-                                    {user.bio?.trim() || "暂无简介"}
-                                </ListGroup.Item>
-                                <ListGroup.Item>
-                                    <strong>注册时间:</strong> {createdAt}
-                                </ListGroup.Item>
-                            </ListGroup>
-                        </Card>
+                        <div className="d-flex flex-column gap-3">
+                            <Card>
+                                <Card.Header as="h5">详细信息</Card.Header>
+                                <ListGroup variant="flush">
+                                    <ListGroup.Item>
+                                        <strong>用户ID:</strong> {user.id}
+                                    </ListGroup.Item>
+                                    <ListGroup.Item>
+                                        <strong>用户名:</strong> {user.username}
+                                    </ListGroup.Item>
+                                    <ListGroup.Item>
+                                        <strong>电子邮箱:</strong>{" "}
+                                        {user.email || "未填写"}
+                                    </ListGroup.Item>
+                                    <ListGroup.Item>
+                                        <strong>账户余额:</strong> ¥
+                                        {balanceDisplay}
+                                    </ListGroup.Item>
+                                    <ListGroup.Item>
+                                        <strong>个人简介:</strong>{" "}
+                                        {user.bio?.trim() || "暂无简介"}
+                                    </ListGroup.Item>
+                                    <ListGroup.Item>
+                                        <strong>注册时间:</strong> {createdAt}
+                                    </ListGroup.Item>
+                                </ListGroup>
+                            </Card>
+                            <Card>
+                                <Card.Header as="h5">余额充值</Card.Header>
+                                <Card.Body>
+                                    <Form
+                                        className="d-flex flex-column gap-3"
+                                        onSubmit={handleRecharge}
+                                    >
+                                        <Form.Group controlId="rechargeAmount">
+                                            <Form.Label>充值金额</Form.Label>
+                                            <Form.Control
+                                                type="number"
+                                                min="0"
+                                                step="0.01"
+                                                placeholder="输入充值金额"
+                                                value={rechargeAmount}
+                                                onChange={(event) => {
+                                                    setRechargeAmount(
+                                                        event.target.value
+                                                    );
+                                                    setRechargeError(null);
+                                                    setRechargeSuccess(null);
+                                                }}
+                                                disabled={rechargeSubmitting}
+                                            />
+                                        </Form.Group>
+                                        {rechargeError && (
+                                            <Alert
+                                                variant="danger"
+                                                className="mb-0"
+                                            >
+                                                {rechargeError}
+                                            </Alert>
+                                        )}
+                                        {rechargeSuccess && (
+                                            <Alert
+                                                variant="success"
+                                                className="mb-0"
+                                            >
+                                                {rechargeSuccess}
+                                            </Alert>
+                                        )}
+                                        <div className="d-flex justify-content-end">
+                                            <Button
+                                                type="submit"
+                                                variant="primary"
+                                                disabled={rechargeSubmitting}
+                                            >
+                                                {rechargeSubmitting
+                                                    ? "充值中..."
+                                                    : "确认充值"}
+                                            </Button>
+                                        </div>
+                                    </Form>
+                                </Card.Body>
+                            </Card>
+                        </div>
                     </Col>
                 </Row>
             </Container>
