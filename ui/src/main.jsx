@@ -10,6 +10,8 @@ import { AuthProvider } from "./contexts/AuthContext.jsx";
 import ProfilePage from "./pages/profile.jsx";
 import ItemPostPage from "./pages/item-post.jsx";
 import ItemsManagePage from "./pages/items-manage.jsx";
+import ConversationsPage from "./pages/conversations.jsx";
+import UserProfilePage from "./pages/user-profile.jsx";
 const router = createBrowserRouter([
     {
         path: "/",
@@ -34,6 +36,14 @@ const router = createBrowserRouter([
             {
                 path: "items/manage",
                 element: <ItemsManagePage />,
+            },
+            {
+                path: "conversations",
+                element: <ConversationsPage />,
+            },
+            {
+                path: "users/:userId",
+                element: <UserProfilePage />,
             },
             {
                 path: "profile",

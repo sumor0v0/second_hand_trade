@@ -68,7 +68,7 @@ const getInitials = (value) => {
 const ItemDetailsPage = () => {
     const { id } = useParams();
     const navigate = useNavigate();
-    const { isAuthenticated } = useAuth();
+    const { isAuthenticated, user } = useAuth();
     const [item, setItem] = useState(null);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState(null);
@@ -79,6 +79,8 @@ const ItemDetailsPage = () => {
     const [commentContent, setCommentContent] = useState("");
     const [commentSubmitting, setCommentSubmitting] = useState(false);
     const [commentSubmitError, setCommentSubmitError] = useState(null);
+    const [contacting, setContacting] = useState(false);
+    const [contactError, setContactError] = useState(null);
 
     useEffect(() => {
         const controller = new AbortController();
@@ -182,6 +184,40 @@ const ItemDetailsPage = () => {
             setCommentSubmitError(message);
         } finally {
             setCommentSubmitting(false);
+        }
+    };
+
+    const handleContactSeller = async () => {
+        if (!item?.seller_id) {
+            return;
+        }
+
+        if (!isAuthenticated) {
+            setContactError("请先登录后再联系卖家。");
+            return;
+        }
+
+        if (user?.id === item.seller_id) {
+            setContactError("这是你自己的商品。");
+            return;
+        }
+
+        setContacting(true);
+        setContactError(null);
+        try {
+            const { data } = await http.post("/conversations", {
+                targetUserId: item.seller_id,
+            });
+            const conversationId = data?.id || data?.conversation_id || null;
+            navigate("/conversations", {
+                state: conversationId ? { focusId: conversationId } : undefined,
+            });
+        } catch (err) {
+            const message =
+                err?.response?.data?.message || err?.message || "联系卖家失败";
+            setContactError(message);
+        } finally {
+            setContacting(false);
         }
     };
 
@@ -321,14 +357,31 @@ const ItemDetailsPage = () => {
 
                     <section className="d-flex flex-column gap-1">
                         <h2 className="h6 mb-0">卖家信息</h2>
-                        <div>卖家：{item.seller_name || "未知卖家"}</div>
+                        <div className="d-flex align-items-center gap-2 flex-wrap">
+                            <span>卖家：</span>
+                            <Button
+                                variant="link"
+                                className="p-0"
+                                onClick={() =>
+                                    navigate(`/users/${item.seller_id}`)
+                                }
+                            >
+                                {item.seller_name || "未知卖家"}
+                            </Button>
+                        </div>
                         <div className="text-muted small">
                             商品编号：{item.id}
                         </div>
                     </section>
 
                     <div className="d-flex gap-2">
-                        <Button variant="primary">立即联系卖家</Button>
+                        <Button
+                            variant="primary"
+                            onClick={handleContactSeller}
+                            disabled={contacting}
+                        >
+                            {contacting ? "处理中..." : "联系卖家"}
+                        </Button>
                         <Button
                             variant="outline-secondary"
                             onClick={() => navigate("/items")}
@@ -336,6 +389,11 @@ const ItemDetailsPage = () => {
                             继续浏览
                         </Button>
                     </div>
+                    {contactError && (
+                        <Alert variant="danger" className="mb-0">
+                            {contactError}
+                        </Alert>
+                    )}
                 </Col>
             </Row>
             <section className="d-flex flex-column gap-3">
