@@ -14,8 +14,8 @@ import http from "../lib/http.js";
 
 const STATUS_OPTIONS = [
     { value: "on_sale", label: "在售" },
-    { value: "sold", label: "已售出" },
     { value: "removed", label: "已下架" },
+    { value: "sold", label: "已售出" },
 ];
 
 const STATUS_VARIANT = {
@@ -25,8 +25,8 @@ const STATUS_VARIANT = {
 };
 
 const STATUS_FLOW = {
-    on_sale: new Set(["on_sale", "sold", "removed"]),
-    sold: new Set(["sold", "removed", "on_sale"]),
+    on_sale: new Set(["on_sale", "removed"]),
+    sold: new Set(["sold"]),
     removed: new Set(["removed", "on_sale"]),
 };
 
@@ -123,6 +123,9 @@ const ItemsManagePage = () => {
     };
 
     const handleStatusChange = async (item, nextStatus) => {
+        if (item.status === "sold") {
+            return;
+        }
         if (item.status === nextStatus) {
             return;
         }
@@ -289,48 +292,57 @@ const ItemsManagePage = () => {
                                                             )?.label ||
                                                                 item.status}
                                                         </Badge>
-                                                        <Form.Select
-                                                            size="sm"
-                                                            value={item.status}
-                                                            disabled={
-                                                                busy ||
-                                                                STATUS_FLOW[
+                                                        {item.status ===
+                                                        "sold" ? (
+                                                            <span className="text-muted small">
+                                                                已售出商品不可更改状态
+                                                            </span>
+                                                        ) : (
+                                                            <Form.Select
+                                                                size="sm"
+                                                                value={
                                                                     item.status
-                                                                ]?.size === 1
-                                                            }
-                                                            onChange={(event) =>
-                                                                handleStatusChange(
-                                                                    item,
-                                                                    event.target
-                                                                        .value
-                                                                )
-                                                            }
-                                                        >
-                                                            {STATUS_OPTIONS.map(
-                                                                (option) => (
-                                                                    <option
-                                                                        key={
+                                                                }
+                                                                disabled={busy}
+                                                                onChange={(
+                                                                    event
+                                                                ) =>
+                                                                    handleStatusChange(
+                                                                        item,
+                                                                        event
+                                                                            .target
+                                                                            .value
+                                                                    )
+                                                                }
+                                                            >
+                                                                {STATUS_OPTIONS.filter(
+                                                                    (option) =>
+                                                                        STATUS_FLOW[
+                                                                            item
+                                                                                .status
+                                                                        ]?.has(
                                                                             option.value
-                                                                        }
-                                                                        value={
-                                                                            option.value
-                                                                        }
-                                                                        disabled={
-                                                                            !STATUS_FLOW[
-                                                                                item
-                                                                                    .status
-                                                                            ]?.has(
+                                                                        )
+                                                                ).map(
+                                                                    (
+                                                                        option
+                                                                    ) => (
+                                                                        <option
+                                                                            key={
                                                                                 option.value
-                                                                            )
-                                                                        }
-                                                                    >
-                                                                        {
-                                                                            option.label
-                                                                        }
-                                                                    </option>
-                                                                )
-                                                            )}
-                                                        </Form.Select>
+                                                                            }
+                                                                            value={
+                                                                                option.value
+                                                                            }
+                                                                        >
+                                                                            {
+                                                                                option.label
+                                                                            }
+                                                                        </option>
+                                                                    )
+                                                                )}
+                                                            </Form.Select>
+                                                        )}
                                                     </div>
                                                 </td>
                                                 <td>
