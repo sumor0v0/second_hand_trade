@@ -78,14 +78,14 @@ const LoginModal = ({ show, onHide, switchToRegister }) => {
 
     return (
         <Modal show={show} onHide={onHide} centered onExited={handleExited}>
-                            <Form.Label>用户名或手机号</Form.Label>
+            <Modal.Header closeButton>
                 <Modal.Title>登录</Modal.Title>
             </Modal.Header>
             <Modal.Body className="d-flex flex-column gap-3">
                 <div className="text-muted small">使用账号和密码进入平台</div>
                 {error && (
                     <Alert variant="danger" className="mb-0">
-                                placeholder="输入用户名或手机号"
+                        {error}
                     </Alert>
                 )}
                 {resetFeedback && (
@@ -95,17 +95,17 @@ const LoginModal = ({ show, onHide, switchToRegister }) => {
                 )}
                 <Form
                     onSubmit={handleSubmit}
-                        setResetFeedback("请先填写用户名或手机号");
+                    className="d-flex flex-column gap-3"
                 >
                     <Form.Group controlId="loginIdentifier">
-                        <Form.Label>用户名</Form.Label>
+                        <Form.Label>用户名或手机号</Form.Label>
                         <Form.Control
                             type="text"
                             value={identifier}
                             onChange={(event) =>
                                 setIdentifier(event.target.value)
                             }
-                            placeholder="输入用户名"
+                            placeholder="输入用户名或手机号"
                             autoComplete="username"
                             required
                         />
