@@ -37,6 +37,7 @@ const OrdersPage = () => {
     const [feedback, setFeedback] = useState(null);
     const [payingId, setPayingId] = useState(null);
     const [cancelingId, setCancelingId] = useState(null);
+    const [completingId, setCompletingId] = useState(null);
     const [highlightOrderId, setHighlightOrderId] = useState(() => {
         return location.state?.focusOrderId || null;
     });
@@ -117,6 +118,28 @@ const OrdersPage = () => {
                 setError(message);
             } finally {
                 setCancelingId(null);
+            }
+        },
+        [fetchOrders]
+    );
+
+    const handleComplete = useCallback(
+        async (orderId) => {
+            setError(null);
+            setFeedback(null);
+            setCompletingId(orderId);
+            try {
+                await http.put(`/orders/${orderId}/receive`);
+                await fetchOrders();
+                setFeedback("确认收货成功，订单已完成。");
+            } catch (err) {
+                const message =
+                    err?.response?.data?.message ||
+                    err?.message ||
+                    "确认收货失败";
+                setError(message);
+            } finally {
+                setCompletingId(null);
             }
         },
         [fetchOrders]
@@ -302,6 +325,33 @@ const OrdersPage = () => {
                                                                 取消订单
                                                             </Button>
                                                         </>
+                                                    ) : null}
+                                                    {order.status === "paid" ? (
+                                                        <Button
+                                                            variant="success"
+                                                            size="sm"
+                                                            disabled={
+                                                                completingId ===
+                                                                order.id
+                                                            }
+                                                            onClick={() =>
+                                                                handleComplete(
+                                                                    order.id
+                                                                )
+                                                            }
+                                                        >
+                                                            {completingId ===
+                                                            order.id ? (
+                                                                <Spinner
+                                                                    as="span"
+                                                                    animation="border"
+                                                                    size="sm"
+                                                                    role="status"
+                                                                    className="me-2"
+                                                                />
+                                                            ) : null}
+                                                            确认收货
+                                                        </Button>
                                                     ) : null}
                                                     <Button
                                                         variant="outline-primary"
