@@ -176,9 +176,9 @@ const UserProfilePage = () => {
                         </div>
                         <div className="flex-grow-1 d-flex flex-column gap-1">
                             <h1 className="h5 mb-0">{userInfo.username}</h1>
-                            {userInfo.email && (
+                            {userInfo.phone_num && (
                                 <div className="text-muted small">
-                                    {userInfo.email}
+                                    {userInfo.phone_num}
                                 </div>
                             )}
                             <div className="text-muted small">

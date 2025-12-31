@@ -12,7 +12,7 @@ router.get("/:id", async (req, res, next) => {
         }
 
         const [rows] = await db.query(
-            "SELECT id, username, email, avatar, bio, balance, created_at FROM users WHERE id = ?",
+            "SELECT id, username, phone_num, avatar, bio, balance, created_at FROM users WHERE id = ?",
             [userId]
         );
 
@@ -37,7 +37,7 @@ router.put("/:id", authMiddleware, async (req, res, next) => {
             return res.status(403).json({ message: "Forbidden" });
         }
 
-        const { username, email, avatar, bio } = req.body || {};
+        const { username, phone_num, avatar, bio } = req.body || {};
         const fields = [];
         const params = [];
 
@@ -46,9 +46,9 @@ router.put("/:id", authMiddleware, async (req, res, next) => {
             params.push(username);
         }
 
-        if (email) {
-            fields.push("email = ?");
-            params.push(email);
+        if (phone_num) {
+            fields.push("phone_num = ?");
+            params.push(phone_num);
         }
 
         if (avatar !== undefined) {
@@ -73,7 +73,7 @@ router.put("/:id", authMiddleware, async (req, res, next) => {
         );
 
         const [rows] = await db.query(
-            "SELECT id, username, email, avatar, bio, balance, created_at FROM users WHERE id = ?",
+            "SELECT id, username, phone_num, avatar, bio, balance, created_at FROM users WHERE id = ?",
             [userId]
         );
 
@@ -82,7 +82,7 @@ router.put("/:id", authMiddleware, async (req, res, next) => {
         if (error && error.code === "ER_DUP_ENTRY") {
             return res
                 .status(409)
-                .json({ message: "Username or email already in use" });
+                .json({ message: "Username or phone number already in use" });
         }
         next(error);
     }
@@ -112,7 +112,7 @@ router.post("/:id/recharge", authMiddleware, async (req, res, next) => {
         ]);
 
         const [rows] = await db.query(
-            "SELECT id, username, email, avatar, bio, balance, created_at FROM users WHERE id = ?",
+            "SELECT id, username, phone_num, avatar, bio, balance, created_at FROM users WHERE id = ?",
             [userId]
         );
 

@@ -16,30 +16,30 @@ function createToken(userId) {
 
 router.post("/register", async (req, res, next) => {
     try {
-        const { username, email, password } = req.body || {};
+        const { username, phone_num, password } = req.body || {};
 
-        if (!username || !email || !password) {
-            return res
-                .status(400)
-                .json({ message: "username, email and password are required" });
+        if (!username || !phone_num || !password) {
+            return res.status(400).json({
+                message: "username, phone_num and password are required",
+            });
         }
 
         const [existing] = await db.query(
-            "SELECT id FROM users WHERE username = ? OR email = ? LIMIT 1",
-            [username, email]
+            "SELECT id FROM users WHERE username = ? OR phone_num = ? LIMIT 1",
+            [username, phone_num]
         );
 
         if (existing.length) {
             return res
                 .status(409)
-                .json({ message: "Username or email already in use" });
+                .json({ message: "Username or phone number already in use" });
         }
 
         const passwordHash = await bcrypt.hash(password, 10);
 
         const [result] = await db.query(
-            "INSERT INTO users (username, email, password_hash) VALUES (?, ?, ?)",
-            [username, email, passwordHash]
+            "INSERT INTO users (username, phone_num, password_hash) VALUES (?, ?, ?)",
+            [username, phone_num, passwordHash]
         );
 
         const token = createToken(result.insertId);
@@ -49,7 +49,7 @@ router.post("/register", async (req, res, next) => {
             user: {
                 id: result.insertId,
                 username,
-                email,
+                phone_num,
                 avatar: null,
                 balance: 0,
             },
@@ -70,7 +70,7 @@ router.post("/login", async (req, res, next) => {
         }
 
         const [rows] = await db.query(
-            "SELECT id, username, email, avatar, balance, password_hash FROM users WHERE username = ? OR email = ? LIMIT 1",
+            "SELECT id, username, phone_num, avatar, balance, password_hash FROM users WHERE username = ? OR phone_num = ? LIMIT 1",
             [identifier, identifier]
         );
 
@@ -92,7 +92,7 @@ router.post("/login", async (req, res, next) => {
             user: {
                 id: user.id,
                 username: user.username,
-                email: user.email,
+                phone_num: user.phone_num,
                 avatar: user.avatar,
                 balance: user.balance,
             },
@@ -111,7 +111,7 @@ router.post("/reset-password", async (req, res, next) => {
         }
 
         const [rows] = await db.query(
-            "SELECT id FROM users WHERE username = ? OR email = ? LIMIT 1",
+            "SELECT id FROM users WHERE username = ? OR phone_num = ? LIMIT 1",
             [identifier, identifier]
         );
 
@@ -125,11 +125,9 @@ router.post("/reset-password", async (req, res, next) => {
                 : "123456";
 
         if (passwordValue.length < 6) {
-            return res
-                .status(400)
-                .json({
-                    message: "New password must be at least 6 characters",
-                });
+            return res.status(400).json({
+                message: "New password must be at least 6 characters",
+            });
         }
 
         const passwordHash = await bcrypt.hash(passwordValue, 10);

@@ -173,7 +173,7 @@ function ProfilePage() {
                                     {user.username}
                                 </Card.Title>
                                 <Card.Subtitle className="text-muted text-center">
-                                    {user.email || "未填写邮箱"}
+                                    {user.phone_num || "未填写手机号"}
                                 </Card.Subtitle>
                                 {feedback && (
                                     <Alert
@@ -220,8 +220,8 @@ function ProfilePage() {
                                         <strong>用户名:</strong> {user.username}
                                     </ListGroup.Item>
                                     <ListGroup.Item>
-                                        <strong>电子邮箱:</strong>{" "}
-                                        {user.email || "未填写"}
+                                        <strong>手机号:</strong>{" "}
+                                        {user.phone_num || "未填写"}
                                     </ListGroup.Item>
                                     <ListGroup.Item>
                                         <strong>账户余额:</strong> ¥

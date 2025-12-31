@@ -14,7 +14,7 @@ async function authMiddleware(req, res, next) {
 
         const decoded = jwt.verify(token, process.env.JWT_SECRET || "");
         const [rows] = await db.query(
-            "SELECT id, username, email, avatar, bio, balance, created_at FROM users WHERE id = ?",
+            "SELECT id, username, phone_num, avatar, bio, balance, created_at FROM users WHERE id = ?",
             [decoded.userId]
         );
 

@@ -5,7 +5,7 @@ import { useAuth } from "../contexts/AuthContext.jsx";
 const RegisterModal = ({ show, onHide, switchToLogin }) => {
     const { register } = useAuth();
     const [username, setUsername] = useState("");
-    const [email, setEmail] = useState("");
+    const [phone, setPhone] = useState("");
     const [password, setPassword] = useState("");
     const [confirmPassword, setConfirmPassword] = useState("");
     const [submitting, setSubmitting] = useState(false);
@@ -21,7 +21,7 @@ const RegisterModal = ({ show, onHide, switchToLogin }) => {
         setSubmitting(true);
         setError(null);
         try {
-            await register({ username, password, email });
+            await register({ username, password, phone_num: phone });
             onHide?.();
         } catch (err) {
             setError(err.message || "注册失败");
@@ -32,7 +32,7 @@ const RegisterModal = ({ show, onHide, switchToLogin }) => {
 
     const handleExited = () => {
         setUsername("");
-        setEmail("");
+        setPhone("");
         setPassword("");
         setConfirmPassword("");
         setSubmitting(false);
@@ -68,14 +68,14 @@ const RegisterModal = ({ show, onHide, switchToLogin }) => {
                             required
                         />
                     </Form.Group>
-                    <Form.Group controlId="registerEmail">
-                        <Form.Label>邮箱</Form.Label>
+                    <Form.Group controlId="registerPhone">
+                        <Form.Label>手机号</Form.Label>
                         <Form.Control
-                            type="email"
-                            value={email}
-                            onChange={(event) => setEmail(event.target.value)}
-                            placeholder="输入邮箱"
-                            autoComplete="email"
+                            type="tel"
+                            value={phone}
+                            onChange={(event) => setPhone(event.target.value)}
+                            placeholder="输入手机号"
+                            autoComplete="tel"
                             required
                         />
                     </Form.Group>

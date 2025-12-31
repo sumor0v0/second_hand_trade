@@ -67,9 +67,9 @@ const SidebarNav = () => {
                         </div>
                         <div className="d-flex flex-column">
                             <div className="fw-semibold">{user.username}</div>
-                            {user.email && (
+                            {user.phone_num && (
                                 <div className="text-muted small">
-                                    {user.email}
+                                    {user.phone_num}
                                 </div>
                             )}
                         </div>

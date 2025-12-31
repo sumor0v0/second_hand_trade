@@ -8,7 +8,7 @@ function EditInfoForm({ show, onHide, onSuccess, onError }) {
     const { user, refreshUser } = useAuth();
     const [formData, setFormData] = useState({
         username: "",
-        email: "",
+        phone_num: "",
         bio: "",
         password: "",
         avatar: "",
@@ -21,7 +21,7 @@ function EditInfoForm({ show, onHide, onSuccess, onError }) {
         if (show && user) {
             setFormData({
                 username: user.username || "",
-                email: user.email || "",
+                phone_num: user.phone_num || "",
                 bio: user.bio || "",
                 password: "",
                 avatar: user.avatar || "",
@@ -45,7 +45,7 @@ function EditInfoForm({ show, onHide, onSuccess, onError }) {
 
         const payload = {
             username: formData.username,
-            email: formData.email,
+            phone_num: formData.phone_num,
             bio: formData.bio,
         };
         if (formData.password) {
@@ -167,14 +167,14 @@ function EditInfoForm({ show, onHide, onSuccess, onError }) {
                             required
                         />
                     </Form.Group>
-                    <Form.Group controlId="editProfileEmail">
-                        <Form.Label>电子邮箱</Form.Label>
+                    <Form.Group controlId="editProfilePhone">
+                        <Form.Label>手机号</Form.Label>
                         <Form.Control
-                            type="email"
-                            value={formData.email}
-                            onChange={handleChange("email")}
-                            placeholder="请输入电子邮箱"
-                            autoComplete="email"
+                            type="tel"
+                            value={formData.phone_num}
+                            onChange={handleChange("phone_num")}
+                            placeholder="请输入手机号"
+                            autoComplete="tel"
                             required
                         />
                     </Form.Group>
