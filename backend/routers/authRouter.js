@@ -102,6 +102,52 @@ router.post("/login", async (req, res, next) => {
     }
 });
 
+router.post("/reset-password", async (req, res, next) => {
+    try {
+        const { identifier, newPassword } = req.body || {};
+
+        if (!identifier) {
+            return res.status(400).json({ message: "identifier is required" });
+        }
+
+        const [rows] = await db.query(
+            "SELECT id FROM users WHERE username = ? OR email = ? LIMIT 1",
+            [identifier, identifier]
+        );
+
+        if (!rows.length) {
+            return res.status(404).json({ message: "User not found" });
+        }
+
+        const passwordValue =
+            typeof newPassword === "string" && newPassword.trim().length
+                ? newPassword.trim()
+                : "123456";
+
+        if (passwordValue.length < 6) {
+            return res
+                .status(400)
+                .json({
+                    message: "New password must be at least 6 characters",
+                });
+        }
+
+        const passwordHash = await bcrypt.hash(passwordValue, 10);
+
+        await db.query("UPDATE users SET password_hash = ? WHERE id = ?", [
+            passwordHash,
+            rows[0].id,
+        ]);
+
+        res.json({
+            message: "Password reset successfully",
+            password: passwordValue,
+        });
+    } catch (error) {
+        next(error);
+    }
+});
+
 router.get("/me", authMiddleware, (req, res) => {
     res.json({ user: req.user });
 });

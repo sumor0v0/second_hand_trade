@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { Alert, Button, Form, Modal } from "react-bootstrap";
 import { useAuth } from "../contexts/AuthContext.jsx";
+import http from "../lib/http.js";
 
 const LoginModal = ({ show, onHide, switchToRegister }) => {
     const { login } = useAuth();
@@ -8,11 +9,15 @@ const LoginModal = ({ show, onHide, switchToRegister }) => {
     const [password, setPassword] = useState("");
     const [submitting, setSubmitting] = useState(false);
     const [error, setError] = useState(null);
+    const [resetting, setResetting] = useState(false);
+    const [resetFeedback, setResetFeedback] = useState(null);
+    const [resetVariant, setResetVariant] = useState("success");
 
     const handleSubmit = async (event) => {
         event.preventDefault();
         setSubmitting(true);
         setError(null);
+        setResetFeedback(null);
         try {
             await login({ identifier, password });
             onHide?.();
@@ -28,6 +33,47 @@ const LoginModal = ({ show, onHide, switchToRegister }) => {
         setPassword("");
         setSubmitting(false);
         setError(null);
+        setResetFeedback(null);
+        setResetting(false);
+    };
+
+    const handleResetPassword = async () => {
+        const trimmedIdentifier = identifier.trim();
+        if (!trimmedIdentifier) {
+            setResetVariant("danger");
+            setResetFeedback("请先填写用户名或邮箱");
+            return;
+        }
+
+        const input = window.prompt("输入新的密码（留空则重置为 123456）");
+
+        if (input === null) {
+            return;
+        }
+
+        setResetting(true);
+        setResetFeedback(null);
+        try {
+            const payload = { identifier: trimmedIdentifier };
+            if (typeof input === "string" && input.trim().length) {
+                payload.newPassword = input.trim();
+            }
+            const { data } = await http.post("/auth/reset-password", payload);
+            const message = data?.password
+                ? `密码已重置，新密码：${data.password}`
+                : data?.message || "密码已重置";
+            setResetVariant("success");
+            setResetFeedback(message);
+        } catch (resetError) {
+            const message =
+                resetError?.response?.data?.message ||
+                resetError?.message ||
+                "重置密码失败";
+            setResetVariant("danger");
+            setResetFeedback(message);
+        } finally {
+            setResetting(false);
+        }
     };
 
     return (
@@ -40,6 +86,11 @@ const LoginModal = ({ show, onHide, switchToRegister }) => {
                 {error && (
                     <Alert variant="danger" className="mb-0">
                         {error}
+                    </Alert>
+                )}
+                {resetFeedback && (
+                    <Alert variant={resetVariant} className="mb-0">
+                        {resetFeedback}
                     </Alert>
                 )}
                 <Form
@@ -71,6 +122,17 @@ const LoginModal = ({ show, onHide, switchToRegister }) => {
                             autoComplete="current-password"
                             required
                         />
+                        <div className="d-flex justify-content-end mt-1">
+                            <Button
+                                variant="link"
+                                size="sm"
+                                className="p-0"
+                                onClick={handleResetPassword}
+                                disabled={submitting || resetting}
+                            >
+                                {resetting ? "重置中..." : "忘记密码？"}
+                            </Button>
+                        </div>
                     </Form.Group>
                     <Button
                         type="submit"
