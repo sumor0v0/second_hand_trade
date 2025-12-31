@@ -172,7 +172,20 @@ router.post("/:id/messages", authMiddleware, async (req, res, next) => {
             [result.insertId]
         );
 
-        res.status(201).json(rows[0]);
+        const message = {
+            conversation_id: conversationId,
+            ...rows[0],
+        };
+
+        const io = req.app.get("io");
+        if (io) {
+            io.to(`conversation:${conversationId}`).emit(
+                "message:new",
+                message
+            );
+        }
+
+        res.status(201).json(message);
     } catch (err) {
         next(err);
     }
@@ -215,10 +228,20 @@ router.post(
                 [result.insertId]
             );
 
-            res.status(201).json({
+            const message = {
                 conversation_id: conversationId,
                 ...rows[0],
-            });
+            };
+
+            const io = req.app.get("io");
+            if (io) {
+                io.to(`conversation:${conversationId}`).emit(
+                    "message:new",
+                    message
+                );
+            }
+
+            res.status(201).json(message);
         } catch (err) {
             next(err);
         }

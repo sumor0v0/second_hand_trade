@@ -14,6 +14,7 @@ import http from "../lib/http.js";
 import { useAuth } from "../contexts/AuthContext.jsx";
 import { useLocation, useNavigate } from "react-router-dom";
 import { BACKEND_URL } from "../config/apiUrl.js";
+import { io } from "socket.io-client";
 
 const formatTime = (value) => {
     if (!value) {
@@ -69,6 +70,65 @@ const ConversationsPage = () => {
     const [uploadingImage, setUploadingImage] = useState(false);
 
     const fileInputRef = useRef(null);
+    const socketRef = useRef(null);
+    const selectedIdRef = useRef(null);
+
+    useEffect(() => {
+        selectedIdRef.current = selectedId;
+    }, [selectedId]);
+
+    useEffect(() => {
+        if (!isAuthenticated) {
+            return undefined;
+        }
+
+        const token =
+            typeof window !== "undefined"
+                ? window.localStorage.getItem("auth_token")
+                : null;
+
+        const socket = io(BACKEND_URL, {
+            auth: { token },
+            transports: ["websocket"],
+        });
+
+        const handleIncomingMessage = (message) => {
+            if (!message) {
+                return;
+            }
+            if (message.conversation_id !== selectedIdRef.current) {
+                return;
+            }
+            setMessages((prev) => {
+                if (prev.some((item) => item.id === message.id)) {
+                    return prev;
+                }
+                return [...prev, message];
+            });
+        };
+
+        socketRef.current = socket;
+        socket.on("message:new", handleIncomingMessage);
+
+        return () => {
+            socket.off("message:new", handleIncomingMessage);
+            socket.disconnect();
+            socketRef.current = null;
+        };
+    }, [isAuthenticated]);
+
+    useEffect(() => {
+        const socket = socketRef.current;
+        if (!socket || !selectedId) {
+            return undefined;
+        }
+
+        socket.emit("join-conversation", selectedId);
+
+        return () => {
+            socket.emit("leave-conversation", selectedId);
+        };
+    }, [selectedId]);
 
     const peerCache = useMemo(() => {
         const map = new Map();
@@ -198,7 +258,12 @@ const ConversationsPage = () => {
                 `/conversations/${selectedId}/messages`,
                 { content }
             );
-            setMessages((prev) => [...prev, data]);
+            setMessages((prev) => {
+                if (prev.some((item) => item.id === data.id)) {
+                    return prev;
+                }
+                return [...prev, data];
+            });
             setComposeText("");
             await fetchConversations(selectedId);
         } catch (error) {
