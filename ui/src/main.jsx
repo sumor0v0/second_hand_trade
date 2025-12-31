@@ -12,6 +12,7 @@ import ItemPostPage from "./pages/item-post.jsx";
 import ItemsManagePage from "./pages/items-manage.jsx";
 import ConversationsPage from "./pages/conversations.jsx";
 import UserProfilePage from "./pages/user-profile.jsx";
+import OrdersPage from "./pages/orders.jsx";
 const router = createBrowserRouter([
     {
         path: "/",
@@ -40,6 +41,10 @@ const router = createBrowserRouter([
             {
                 path: "conversations",
                 element: <ConversationsPage />,
+            },
+            {
+                path: "orders",
+                element: <OrdersPage />,
             },
             {
                 path: "users/:userId",
