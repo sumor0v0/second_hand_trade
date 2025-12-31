@@ -68,6 +68,24 @@ router.get("/my", authMiddleware, async (req, res, next) => {
     }
 });
 
+router.get("/seller", authMiddleware, async (req, res, next) => {
+    try {
+        const [rows] = await db.query(
+            `SELECT o.id, o.item_id, o.price, o.status, o.created_at,
+              i.title AS item_title
+         FROM orders o
+         JOIN items i ON i.id = o.item_id
+        WHERE i.seller_id = ?
+        ORDER BY o.created_at DESC`,
+            [req.user.id]
+        );
+
+        res.json(rows);
+    } catch (error) {
+        next(error);
+    }
+});
+
 router.put("/:id/pay", authMiddleware, async (req, res, next) => {
     let connection;
     try {

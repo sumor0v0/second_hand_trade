@@ -30,6 +30,22 @@ const STATUS_FLOW = {
     removed: new Set(["removed", "on_sale"]),
 };
 
+const ORDER_STATUS_LABEL = {
+    pending: "待支付",
+    paid: "待发货",
+    shipped: "已发货",
+    completed: "已完成",
+    cancelled: "已取消",
+};
+
+const ORDER_STATUS_VARIANT = {
+    pending: "warning",
+    paid: "info",
+    shipped: "primary",
+    completed: "success",
+    cancelled: "secondary",
+};
+
 const ItemsManagePage = () => {
     const { isAuthenticated, user } = useAuth();
     const userId = user?.id;
@@ -42,6 +58,7 @@ const ItemsManagePage = () => {
     const [priceDraft, setPriceDraft] = useState("");
     const [priceError, setPriceError] = useState(null);
     const [busySet, setBusySet] = useState(() => new Set());
+    const [sellerOrders, setSellerOrders] = useState([]);
 
     const isBusy = useCallback((id) => busySet.has(id), [busySet]);
 
@@ -77,11 +94,44 @@ const ItemsManagePage = () => {
         }
     }, [isAuthenticated, userId]);
 
+    const fetchSellerOrders = useCallback(async () => {
+        if (!isAuthenticated || !userId) {
+            return;
+        }
+        try {
+            const { data } = await http.get("/orders/seller");
+            setSellerOrders(Array.isArray(data) ? data : []);
+        } catch (err) {
+            const messageText =
+                err?.response?.data?.message || err?.message || "获取订单失败";
+            setError(messageText);
+        }
+    }, [isAuthenticated, userId]);
+
     useEffect(() => {
         fetchItems();
     }, [fetchItems]);
 
+    useEffect(() => {
+        fetchSellerOrders();
+    }, [fetchSellerOrders]);
+
     const visibleItems = useMemo(() => items, [items]);
+
+    const sellerOrderMap = useMemo(() => {
+        const map = new Map();
+        sellerOrders.forEach((order) => {
+            if (!map.has(order.item_id)) {
+                map.set(order.item_id, order);
+                return;
+            }
+            const existing = map.get(order.item_id);
+            if (order.status === "paid" && existing.status !== "paid") {
+                map.set(order.item_id, order);
+            }
+        });
+        return map;
+    }, [sellerOrders]);
 
     const beginEditPrice = (item) => {
         setEditingId(item.id);
@@ -151,6 +201,29 @@ const ItemsManagePage = () => {
             setBusy(item.id, false);
         }
     };
+
+    const handleShipOrder = useCallback(
+        async (order, itemId) => {
+            if (!order) {
+                return;
+            }
+            setBusy(itemId, true);
+            setError(null);
+            setMessage(null);
+            try {
+                await http.put(`/orders/${order.id}/ship`);
+                setMessage("订单已标记为已发货");
+                await fetchSellerOrders();
+            } catch (err) {
+                const messageText =
+                    err?.response?.data?.message || err?.message || "发货失败";
+                setError(messageText);
+            } finally {
+                setBusy(itemId, false);
+            }
+        },
+        [fetchSellerOrders, setBusy]
+    );
 
     if (!isAuthenticated) {
         return <Alert variant="warning">请登录后管理商品。</Alert>;
@@ -353,15 +426,75 @@ const ItemsManagePage = () => {
                                                         : "-"}
                                                 </td>
                                                 <td>
-                                                    <Button
-                                                        as={Link}
-                                                        size="sm"
-                                                        variant="outline-primary"
-                                                        to={`/items/${item.id}`}
-                                                        disabled={busy}
-                                                    >
-                                                        查看
-                                                    </Button>
+                                                    <div className="d-flex flex-column gap-2">
+                                                        <Button
+                                                            as={Link}
+                                                            size="sm"
+                                                            variant="outline-primary"
+                                                            to={`/items/${item.id}`}
+                                                            disabled={busy}
+                                                        >
+                                                            查看
+                                                        </Button>
+                                                        {(() => {
+                                                            const relatedOrder =
+                                                                sellerOrderMap.get(
+                                                                    item.id
+                                                                );
+                                                            if (
+                                                                relatedOrder?.status ===
+                                                                "paid"
+                                                            ) {
+                                                                return (
+                                                                    <Button
+                                                                        size="sm"
+                                                                        variant="outline-success"
+                                                                        disabled={
+                                                                            busy
+                                                                        }
+                                                                        onClick={() =>
+                                                                            handleShipOrder(
+                                                                                relatedOrder,
+                                                                                item.id
+                                                                            )
+                                                                        }
+                                                                    >
+                                                                        {busy ? (
+                                                                            <Spinner
+                                                                                as="span"
+                                                                                animation="border"
+                                                                                size="sm"
+                                                                                role="status"
+                                                                                className="me-2"
+                                                                            />
+                                                                        ) : null}
+                                                                        发货
+                                                                    </Button>
+                                                                );
+                                                            }
+                                                            if (relatedOrder) {
+                                                                return (
+                                                                    <Badge
+                                                                        bg={
+                                                                            ORDER_STATUS_VARIANT[
+                                                                                relatedOrder
+                                                                                    .status
+                                                                            ] ||
+                                                                            "secondary"
+                                                                        }
+                                                                        className="text-center"
+                                                                    >
+                                                                        {ORDER_STATUS_LABEL[
+                                                                            relatedOrder
+                                                                                .status
+                                                                        ] ||
+                                                                            relatedOrder.status}
+                                                                    </Badge>
+                                                                );
+                                                            }
+                                                            return null;
+                                                        })()}
+                                                    </div>
                                                 </td>
                                             </tr>
                                         );
