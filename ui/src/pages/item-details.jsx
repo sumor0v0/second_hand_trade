@@ -68,7 +68,7 @@ const getInitials = (value) => {
 const ItemDetailsPage = () => {
     const { id } = useParams();
     const navigate = useNavigate();
-    const { isAuthenticated, user, refreshUser } = useAuth();
+    const { isAuthenticated, user } = useAuth();
     const [item, setItem] = useState(null);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState(null);
@@ -255,17 +255,10 @@ const ItemDetailsPage = () => {
             const { data: order } = await http.post("/orders", {
                 itemId: item.id,
             });
-            await http.put(`/orders/${order.id}/pay`);
-            setItem((prev) =>
-                prev
-                    ? {
-                          ...prev,
-                          status: "sold",
-                      }
-                    : prev
-            );
-            setPurchaseSuccess("购买成功，订单已支付。");
-            await refreshUser();
+            setPurchaseSuccess("订单已创建，请前往购买记录完成支付。");
+            navigate("/orders", {
+                state: { focusOrderId: order?.id },
+            });
         } catch (purchaseErr) {
             const message =
                 purchaseErr?.response?.data?.message ||
