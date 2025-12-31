@@ -202,6 +202,47 @@ router.put("/:id/pay", authMiddleware, async (req, res, next) => {
     }
 });
 
+router.put("/:id/ship", authMiddleware, async (req, res, next) => {
+    try {
+        const orderId = Number(req.params.id);
+        if (Number.isNaN(orderId)) {
+            return res.status(400).json({ message: "Invalid order id" });
+        }
+
+        const [orders] = await db.query(
+            `SELECT o.id, o.status, o.item_id, i.seller_id
+               FROM orders o
+               JOIN items i ON i.id = o.item_id
+              WHERE o.id = ?`,
+            [orderId]
+        );
+
+        if (!orders.length) {
+            return res.status(404).json({ message: "Order not found" });
+        }
+
+        const order = orders[0];
+
+        if (order.seller_id !== req.user.id) {
+            return res.status(403).json({ message: "Forbidden" });
+        }
+
+        if (order.status !== "paid") {
+            return res
+                .status(400)
+                .json({ message: "Only paid orders can be shipped" });
+        }
+
+        await db.query("UPDATE orders SET status = 'shipped' WHERE id = ?", [
+            orderId,
+        ]);
+
+        res.json({ id: orderId, status: "shipped" });
+    } catch (error) {
+        next(error);
+    }
+});
+
 router.put("/:id/cancel", authMiddleware, async (req, res, next) => {
     try {
         const orderId = Number(req.params.id);
